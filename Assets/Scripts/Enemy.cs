@@ -4,21 +4,20 @@ using UnityEngine;
 
 public class Enemy : MonoBehaviour
 {
-    private BoxCollider myColider;
-
-    void Start()
-    {
-        myColider = gameObject.GetComponent<BoxCollider>();
-    }
     void Update() {
-        foreach(GameObject shot in GameObject.FindGameObjectsWithTag("shot"))
+        ShotCheck();
+    }
+
+    public void ShotCheck() {
+        BoxCollider myColider = gameObject.GetComponent<BoxCollider>();
+        foreach (GameObject shot in GameObject.FindGameObjectsWithTag("shot"))
         {
-            if (myColider.bounds.Intersects(shot.GetComponent<SphereCollider>().bounds)) { // если пересекаются с выстрелом, 
-                //думал реализовать через OnTriggerEnter, но условие на то что обязательно в скрипте врага, который стоит неподвижно не дает
+            if (myColider.bounds.Intersects(shot.GetComponent<SphereCollider>().bounds))// если пересекаются с выстрелом  
+            {         
                 Destroy(shot);
                 Destroy(gameObject);
             }
-        }        
+        }
     }
 
 }

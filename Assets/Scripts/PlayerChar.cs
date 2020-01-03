@@ -6,29 +6,29 @@ using UnityEngine.UI;
 public class PlayerChar : MonoBehaviour
 {
     public float velocityMutiplier = 1f;
-    public Camera camera;
     public GameObject rotatable; // вращаемая часть персонажа, нужно чтобы камеру не вращать с собой
     public KeyCode shootKey = KeyCode.Mouse0; // код кнопки выстрела
     public GameObject projectilePrefab;
+    public bool gameOverMode = false;
 
     void Start()
     {
-        if (camera == null){
-            camera = Camera.main;
-        }
-        camera.transform.parent = transform;
-        camera.transform.LookAt(transform.position);
-        //тут хорошо бы еще передвинуть камеру чтобы компенсировать возможные спавны игрока на разной дистанции
+        Camera.main.transform.parent = transform;
+        Camera.main.transform.LookAt(transform.position);
+        //тут хорошо бы еще передвинуть камеру чтобы компенсировать возможные спавны игрока на разной дистанции, но для одной сцены не требуется
 
-        Text shotButtonName = GameObject.FindGameObjectWithTag("shotbuttontext").GetComponent<Text>();
-        shotButtonName.text = shootKey.ToString(); // это к заданию про элемент интерфейса который показывает кнопку выстрела
+        Text shootButtonName = GameObject.FindGameObjectWithTag("shotbuttontext").GetComponent<Text>();
+        shootButtonName.text = shootKey.ToString(); // это к заданию про элемент интерфейса который показывает кнопку выстрела
     }
 
     void Update()
     {
-        MoveUpdate();
-        RotationUpdate();
-        ShootCheck();
+        if (!gameOverMode)
+        {
+            MoveUpdate();
+            RotationUpdate();
+            ShootCheck();
+        }
     }
 
     void MoveUpdate()
@@ -39,12 +39,13 @@ public class PlayerChar : MonoBehaviour
 
     }
 
-    void RotationUpdate() {
+    void RotationUpdate()
+    {
         RaycastHit hit;
-        Physics.Raycast(camera.ScreenPointToRay(Input.mousePosition), out hit); // рейкаст из камеры в направлении мышки
-        Vector3 mousePointOnGround = hit.point - hit.point.y*Vector3.up; // находим точку попадания в любой первый коллаедр, убираем вертикальную составляющую
-        //Debug.Log(mousePointOnGround);
-        rotatable.transform.rotation = Quaternion.LookRotation(mousePointOnGround - transform.position, Vector3.up); // поворачиваем к мышке
+        Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit); // рейкаст из камеры в направлении мышки
+        Vector3 mousePointOnGround = hit.point - hit.point.y * Vector3.up; // находим точку попадания в любой первый коллаедр, убираем вертикальную составляющую                                                                               
+        rotatable.transform.rotation = Quaternion.LookRotation(mousePointOnGround - transform.position, Vector3.up); 
+
     }
 
     void ShootCheck() {
@@ -56,4 +57,28 @@ public class PlayerChar : MonoBehaviour
         }
     }
 
+    public void GameOver()
+    {
+        if (!gameOverMode){ //защита от повторных вызовов
+            //Debug.Log("Game over");
+            gameOverMode = true;
+            Destroy(rotatable);//удаляем только видимую часть персонажа, чтобы этот скрипт продолжал гасить свет, и не создавал ошибки при запросах дистанции до игрока
+            StartCoroutine("LightColorLerp");
+        }
+    }
+
+    IEnumerator LightColorLerp()//не очень чистый способ, т.к. могут появиться другие источники света, можно поискать варианты через непрозрачный UI если будет нужно
+    {
+        Color start = GameObject.FindGameObjectWithTag("light").GetComponent<Light>().color;
+        Color end = Color.black;
+        float time = 0f;
+        float endTime = 2f;
+        while (time < endTime)
+        {
+            GameObject.FindGameObjectWithTag("light").GetComponent<Light>().color = Color.Lerp(start, end, time/endTime);
+            yield return new WaitForSeconds(0.01f);
+            time += 0.01f;
+        }
+        GameObject.FindGameObjectWithTag("light").GetComponent<Light>().color = end;        
+    }
 }

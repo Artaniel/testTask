@@ -6,6 +6,7 @@ TagManager:
   tags:
   - shot
   - shotbuttontext
+  - light
   layers:
   - Default
   - TransparentFX
